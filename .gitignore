@@ -1,0 +1,16 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Android local machine configuration
+local.properties
+
+# IDE and local tool state
+.idea/
+.kotlin/
+.trae/
+
+# Module build output
+*/build/

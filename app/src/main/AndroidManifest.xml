@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="com.android.permission.GET_INSTALLED_APPS" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.tencent.mm" />
+        <package android:name="com.ss.android.ugc.aweme" />
+        <package android:name="com.android.gallery3d" />
+        <package android:name="com.miui.gallery" />
+        <package android:name="com.google.android.apps.photos" />
+        <package android:name="com.android.dialer" />
+    </queries>
+
+    <application
+        android:name=".OneTapApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.OneTap"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:stateNotNeeded="true"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.activity.SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ui.activity.ContactManagementActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ui.activity.ContactDetailActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ui.activity.AppManagementActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ui.activity.DisplaySettingsActivity"
+            android:exported="false"
+            android:screenOrientation="user"
+            android:theme="@style/Theme.OneTap"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ui.activity.LauncherChooserActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <service
+            android:name=".service.wechat.WeChatAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_wechat" />
+        </service>
+    </application>
+</manifest>
