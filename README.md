@@ -1,188 +1,163 @@
-# OneTap 一键通
+# OneTap
 
-<div align="center">
-  <img src="app/src/main/ic_launcher-playstore.png" width="120" height="120" alt="OneTap Logo">
-  <br>
-  <h3>为老年人量身定制的简化版Android桌面应用</h3>
-  <p>让科技更贴心，让操作更简单</p>
-</div>
+OneTap 是一款面向长辈和家属的 Android 桌面应用。它把手机首页简化成更清晰的家人联系、常用应用、天气日期和设置入口，让长辈可以用更少步骤完成日常操作，也让家属更容易维护联系人和常用软件。
 
-## 📱 项目简介
+<p align="center">
+  <img src="app/src/main/ic_launcher-playstore.png" width="128" height="128" alt="OneTap app icon">
+</p>
 
-OneTap（一键通）是一款专为老年人设计的Android桌面启动器应用。它简化了智能手机的操作界面，提供大字体、高对比度的显示效果，让老年人能够轻松使用智能手机的基本功能。
+## 项目定位
 
-### ✨ 主要特性
+OneTap 不是普通通讯录，也不是单纯的启动器。它的核心目标是提供一个适合长辈长期使用的“简化桌面”：
 
-- 🏠 **简化桌面**：替代系统桌面，提供简洁明了的主界面
-- 👥 **联系人管理**：大头像显示，一键打微信视频、微信语音、拨打电话
-- 📱 **常用应用**：快速访问常用APP，支持自定义排序
-- 🌤️ **天气显示**：实时显示当前天气和农历日期
-- 🔊 **语音辅助**：支持语音反馈，帮助视力不佳的用户
-- 🎨 **主题设置**：支持蓝色/橙色主题，高对比度模式
-- ♿ **无障碍设计**：大字体、高对比度、简化操作
+- 首页信息足够大、足够清楚，减少复杂入口。
+- 家人联系人优先展示，支持电话、微信语音和微信视频等常用联系动作。
+- 常用应用由家属配置，长辈只看到真正需要的入口。
+- 显示、语音、主题等设置集中管理，方便按使用习惯调整。
 
-## 🏗️ 技术架构
+## 当前功能
 
-### 开发环境
-- **开发语言**：Kotlin
-- **最小SDK版本**：API 24 (Android 7.0)
-- **目标SDK版本**：API 35 (Android 15)
-- **编译SDK版本**：API 35
+### 长辈首页
 
-### 核心技术栈
-- **UI框架**：Jetpack Compose + Material3
-- **架构模式**：MVVM + Repository Pattern
-- **依赖注入**：Dagger Hilt
-- **数据库**：Room Database
-- **数据存储**：DataStore Preferences
-- **网络请求**：Retrofit + OkHttp
-- **图片加载**：Coil
-- **异步处理**：Kotlin Coroutines
-- **导航**：Navigation Compose
+- 显示当前时间、日期、星期和农历信息。
+- 显示实时天气摘要。
+- 提供家人联系人快捷入口。
+- 提供常用应用快捷入口。
+- 支持作为系统桌面使用。
 
-### 项目结构
-```
-app/src/main/java/tech/huangsh/onetap/
-├── data/                    # 数据层
-│   ├── local/              # 本地数据存储
-│   ├── model/              # 数据模型
-│   ├── remote/             # 网络API
-│   └── repository/         # 数据仓库
-├── di/                     # 依赖注入模块
-├── service/                # 系统服务
-├── ui/                     # UI层
-│   ├── activity/           # Activity
-│   ├── screens/            # Compose屏幕
-│   └── theme/              # 主题配置
-├── utils/                  # 工具类
-└── viewmodel/              # ViewModel
-```
+### 家人联系
 
-## 🚀 功能模块
+- 添加、编辑、删除联系人。
+- 支持联系人头像。
+- 支持联系人排序和置顶。
+- 支持从系统通讯录导入。
+- 支持电话、微信语音、微信视频等联系方式。
 
-### 1. 主界面 (HomeScreen)
-- 显示当前时间、日期、星期
-- 显示农历日期
-- 实时天气信息
-- 联系人快速拨号网格
-- 常用应用快速启动
+### 常用应用
 
-### 2. 联系人管理
-- 添加/编辑/删除联系人
-- 支持头像设置
-- 拖拽排序功能
-- 从系统通讯录导入
-- 支持电话、微信语音、微信视频通话
+- 扫描本机已安装应用。
+- 将常用应用添加到长辈首页。
+- 支持搜索、分类展示和排序。
+- 针对部分系统的应用列表权限提供引导说明。
 
-### 3. 应用管理
-- 扫描已安装应用
-- 自定义常用应用列表
-- 应用分类显示
-- 拖拽排序
+### 微信辅助
 
-### 4. 设置功能
-- 语音设置（语音反馈、语速、音量）
-- 显示设置（字体大小、对比度）
-- 主题设置（蓝色/橙色主题）
-- 开机自启动设置
+- 通过无障碍服务辅助发起微信语音或视频通话。
+- 通过独立的微信自动化控制逻辑处理操作流程。
+- 适合减少长辈在微信内查找联系人和按钮的步骤。
 
-### 5. 微信集成
-- 微信视频通话
-- 微信语音通话
-- 无障碍服务支持
+### 显示与语音设置
 
-## 📋 权限说明
+- 支持字体大小设置。
+- 支持普通/高对比度显示。
+- 支持蓝色和暖色主题。
+- 支持语音提示、语速、音量等辅助设置。
+- 支持默认桌面状态检测和退出桌面模式。
 
-应用需要以下权限来提供完整功能：
+## 技术栈
 
-- **电话权限**：拨打电话功能
-- **联系人权限**：读取和管理联系人
-- **相机权限**：拍摄联系人头像
-- **存储权限**：保存图片和数据
-- **位置权限**：获取天气信息
-- **网络权限**：获取天气数据
-- **悬浮窗权限**：显示提醒窗口
-- **无障碍服务**：微信自动化操作
-- **开机启动权限**：自动启动应用
+- 语言：Kotlin
+- UI：Jetpack Compose、Material 3
+- 架构：MVVM、Repository
+- 依赖注入：Hilt
+- 本地数据库：Room
+- 设置存储：DataStore Preferences
+- 网络：Retrofit、OkHttp
+- 图片加载：Coil
+- 异步：Kotlin Coroutines
+- 拖拽排序：Compose Reorderable
+- 农历：lunar
 
-## 🛠️ 开发设置
+## 环境要求
 
-### 环境要求
 - Android Studio 2024.2.1 或更高版本
 - JDK 8 或更高版本
 - Android SDK API 35
-- Gradle 8.10.0
+- Gradle Wrapper 已随项目提交
 
-### 构建项目
-1. 克隆项目到本地
+项目配置：
+
+- `applicationId`: `tech.huangsh.onetap`
+- `minSdk`: 24
+- `targetSdk`: 35
+- `compileSdk`: 35
+- `versionName`: 1.0
+- `versionCode`: 1
+
+## 构建与运行
+
+克隆项目：
+
 ```bash
-git clone https://github.com/yourusername/OneTap.git
-cd OneTap
+git clone https://github.com/happylong233/OneTap-master.git
+cd OneTap-master
 ```
 
-2. 使用Android Studio打开项目
+检查构建：
 
-3. 同步Gradle依赖
 ```bash
 ./gradlew build
 ```
 
-4. 运行项目
+安装调试版本：
+
 ```bash
 ./gradlew installDebug
 ```
 
-### 主要依赖版本
-- Kotlin: 2.0.21
-- Compose BOM: 2024.09.00
-- Hilt: 2.56.2
-- Room: 2.6.1
-- Retrofit: 2.9.0
-- Navigation: 2.7.5
+生成 Debug APK：
 
-## 📦 安装说明
+```bash
+./gradlew assembleDebug
+```
 
-### 从源码构建
-1. 确保满足开发环境要求
-2. 构建Release版本：
+生成 Release APK：
+
 ```bash
 ./gradlew assembleRelease
 ```
-3. 安装APK文件到设备
 
-### 首次使用
-1. 安装后首次启动会请求必要权限
-2. 建议设置为默认桌面应用
-3. 根据使用习惯配置联系人和常用应用
+在 Windows PowerShell 中可以使用：
 
-## 🤝 贡献指南
+```powershell
+.\gradlew.bat build
+.\gradlew.bat installDebug
+```
 
-欢迎为OneTap项目贡献代码！
+## 目录结构
 
-### 贡献流程
-1. Fork本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建Pull Request
+```text
+app/src/main/java/tech/huangsh/onetap/
+├── data/                 # 数据层
+│   ├── local/            # Room、DAO、迁移和类型转换
+│   ├── model/            # 数据模型
+│   ├── remote/           # 天气 API 和远程数据映射
+│   └── repository/       # 数据仓库
+├── di/                   # Hilt 依赖注入
+├── service/              # 微信无障碍与自动化服务
+├── ui/                   # Activity、Compose 页面和主题
+├── utils/                # 工具类
+└── viewmodel/            # ViewModel
+```
 
-### 代码规范
-- 遵循Kotlin编码规范
-- 使用有意义的变量和函数命名
-- 添加适当的注释
-- 确保代码通过所有测试
+## 主要权限
 
-## 📄 开源协议
+应用会根据功能需要申请以下权限：
 
-本项目采用 [MIT License](LICENSE) 开源协议。
+- 电话权限：用于拨打电话。
+- 应用列表权限：用于读取本机已安装应用并配置常用应用。
+- 网络权限：用于获取天气数据。
+- 无障碍服务：用于辅助发起微信语音或视频通话。
+- 存储/图片访问相关权限：用于联系人头像等本地图片能力。
+- 振动权限：用于交互反馈。
 
-## 🙏 致谢
+## 使用建议
 
-- [wechat_video_call](https://github.com/davidche1116/wechat_video_call)
-- [微信控件混淆导致节点无法识别解决方案](https://zhuanlan.zhihu.com/p/1898312642701026938)
+1. 安装后将 OneTap 设置为默认桌面。
+2. 家属先进入设置中心，添加家人联系人和常用应用。
+3. 如需微信语音或视频通话辅助，按提示开启无障碍服务。
+4. 根据长辈视力和使用习惯调整字体、对比度、主题和语音提示。
 
----
+## 开源协议
 
-<div align="center">
-  <p>让科技更有温度，让每一次触碰都充满关怀 ❤️</p>
-</div>
+本项目使用 [MIT License](LICENSE)。
