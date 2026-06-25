@@ -1,4 +1,12 @@
 pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            when (requested.id.id) {
+                "com.android.application" ->
+                    useModule("com.android.tools.build:gradle:${requested.version}")
+            }
+        }
+    }
     repositories {
         maven { url = uri("https://maven.aliyun.com/repository/public/") }
         maven { url = uri("https://maven.aliyun.com/repository/central/") }

@@ -3,9 +3,12 @@ package tech.huangsh.onetap.ui.screens.display
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.TextFields
@@ -49,7 +52,10 @@ fun DisplaySettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 主题颜色设置 - 紧凑版
@@ -145,6 +151,38 @@ fun DisplaySettingsScreen(
                         currentHighContrast = settings.highContrast,
                         title = stringResource(R.string.contrast_high),
                         onClick = { settingsViewModel.updateContrastMode(true) }
+                    )
+                }
+            }
+
+            DisplaySettingsItem(
+                icon = Icons.Default.Groups,
+                title = "找家人每页数量",
+                subtitle = "当前每页显示 ${settings.familyContactsPerPage} 个家人"
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CompactCountOption(
+                        count = 2,
+                        currentCount = settings.familyContactsPerPage,
+                        onClick = { settingsViewModel.updateFamilyContactsPerPage(2) }
+                    )
+                    CompactCountOption(
+                        count = 4,
+                        currentCount = settings.familyContactsPerPage,
+                        onClick = { settingsViewModel.updateFamilyContactsPerPage(4) }
+                    )
+                    CompactCountOption(
+                        count = 6,
+                        currentCount = settings.familyContactsPerPage,
+                        onClick = { settingsViewModel.updateFamilyContactsPerPage(6) }
+                    )
+                    CompactCountOption(
+                        count = 8,
+                        currentCount = settings.familyContactsPerPage,
+                        onClick = { settingsViewModel.updateFamilyContactsPerPage(8) }
                     )
                 }
             }
@@ -318,6 +356,34 @@ fun RowScope.CompactContrastOption(
     ) {
         Text(
             text = title,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+fun RowScope.CompactCountOption(
+    count: Int,
+    currentCount: Int,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = if (count == currentCount)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surface,
+            contentColor = if (count == currentCount)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurface
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = "${count}个",
             style = MaterialTheme.typography.bodyMedium
         )
     }

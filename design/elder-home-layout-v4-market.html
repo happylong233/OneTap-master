@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneTap 老人首页 v4 market reference</title>
+  <style>
+    :root {
+      --bg: #fff3e7;
+      --card: #fffefd;
+      --ink: #241914;
+      --muted: #76685e;
+      --orange: #ff6730;
+      --green: #12a65c;
+      --phone: #2f241d;
+      --line: #ead7c8;
+      --soft: #fff7ef;
+      --shadow: 0 8px 18px rgba(70, 42, 22, .12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #dde3ea;
+      font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+
+    .phone {
+      width: min(430px, 100vw);
+      height: min(932px, 100vh);
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
+    }
+
+    .screen {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px 14px 12px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 68px;
+      flex-shrink: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .family {
+      min-width: 112px;
+      min-height: 60px;
+      border: 0;
+      border-radius: 20px;
+      background: #fff;
+      color: #df4d18;
+      box-shadow: var(--shadow);
+      font-size: 22px;
+      font-weight: 950;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .contacts {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 2px 0 4px;
+    }
+
+    .contact {
+      min-height: 236px;
+      background: var(--card);
+      border-radius: 22px;
+      border: 1px solid rgba(128, 82, 42, .08);
+      box-shadow: var(--shadow);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 136px;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .photo {
+      border-radius: 18px;
+      background-color: var(--soft);
+      background-size: cover;
+      background-position: center;
+      min-height: 216px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-rows: 1fr 1fr auto;
+      gap: 8px;
+    }
+
+    .video,
+    .phone-call {
+      width: 100%;
+      border-radius: 18px;
+      font-size: 27px;
+      line-height: 1.05;
+      font-weight: 950;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .voice {
+      min-height: 28px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 850;
+      padding: 0;
+      white-space: nowrap;
+    }
+
+    .video {
+      border: 0;
+      background: var(--green);
+      color: white;
+    }
+
+    .phone-call {
+      border: 3px solid var(--phone);
+      background: #fffdfb;
+      color: var(--phone);
+    }
+
+    .bottom {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .watch {
+      min-height: 82px;
+      border: 0;
+      border-radius: 24px;
+      background: var(--orange);
+      color: white;
+      box-shadow: 0 10px 22px rgba(255, 103, 48, .22);
+      font-size: 31px;
+      font-weight: 950;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      white-space: nowrap;
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.15;
+      font-weight: 650;
+    }
+
+    .icon {
+      font-size: 1.2em;
+      line-height: 1;
+    }
+
+    @media (max-width: 390px) {
+      .screen {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .family {
+        min-width: 98px;
+        font-size: 19px;
+      }
+
+      .contact {
+        grid-template-columns: minmax(0, 1fr) 120px;
+        gap: 10px;
+      }
+
+      .photo {
+        min-height: 208px;
+      }
+
+      .video,
+      .phone-call {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <section class="screen">
+      <header class="topbar">
+        <div>
+          <div class="subtitle">今天想联系谁？</div>
+          <h1>找家人</h1>
+        </div>
+        <button class="family" type="button">
+          <span class="icon">⚙</span>
+          家属
+        </button>
+      </header>
+
+      <section class="contacts" aria-label="家人列表">
+        <article class="contact">
+          <div class="photo" style="background-image:url('E:/Users/33761/qq消息/Tencent Files/3376107798/nt_qq/nt_data/Pic/2026-06/Thumb/2407ab9908230bb27503173f93ff1fe6_720.jpg')"></div>
+          <div class="actions">
+            <button class="video" type="button"><span class="icon">▣</span>视频</button>
+            <button class="phone-call" type="button"><span class="icon">☎</span>电话</button>
+            <button class="voice" type="button">语音</button>
+          </div>
+        </article>
+
+        <article class="contact">
+          <div class="photo" style="background-image:url('E:/Users/33761/qq消息/Tencent Files/3376107798/nt_qq/nt_data/Pic/2026-06/Ori/de5d0677121a192a6f812ed2883818d2.jpeg')"></div>
+          <div class="actions">
+            <button class="video" type="button"><span class="icon">▣</span>视频</button>
+            <button class="phone-call" type="button"><span class="icon">☎</span>电话</button>
+            <button class="voice" type="button">语音</button>
+          </div>
+        </article>
+
+        <article class="contact">
+          <div class="photo" style="background-image:url('E:/Users/33761/qq消息/Tencent Files/3376107798/nt_qq/nt_data/Pic/2026-06/Thumb/69ac7c4d4a4d8dafb6ca7252e16bc693_720.jpg')"></div>
+          <div class="actions">
+            <button class="video" type="button"><span class="icon">▣</span>视频</button>
+            <button class="phone-call" type="button"><span class="icon">☎</span>电话</button>
+            <button class="voice" type="button">语音</button>
+          </div>
+        </article>
+
+        <article class="contact">
+          <div class="photo" style="background-image:url('E:/Users/33761/qq消息/Tencent Files/3376107798/nt_qq/nt_data/Pic/2026-06/Ori/a6edb707b785f15debdbc473e17b556e.jpg')"></div>
+          <div class="actions">
+            <button class="video" type="button"><span class="icon">▣</span>视频</button>
+            <button class="phone-call" type="button"><span class="icon">☎</span>电话</button>
+            <button class="voice" type="button">语音</button>
+          </div>
+        </article>
+      </section>
+
+      <footer class="bottom">
+        <button class="watch" type="button">
+          <span class="icon">▰</span>
+          看视频
+        </button>
+        <div class="hint">按手机主页键也会回到这里</div>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>

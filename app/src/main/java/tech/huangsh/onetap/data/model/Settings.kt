@@ -14,7 +14,8 @@ data class Settings(
     val password: String = "",
     val isDefaultLauncher: Boolean = false,
     val showExitLauncher: Boolean = true,
-    val launcherExitConfirmation: Boolean = true
+    val launcherExitConfirmation: Boolean = true,
+    val familyContactsPerPage: Int = 2
 ) {
     val voiceAssistantEnabled: Boolean get() = voiceEnabled
     val voiceFeedbackEnabled: Boolean get() = voiceEnabled

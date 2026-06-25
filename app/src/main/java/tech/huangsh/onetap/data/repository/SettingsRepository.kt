@@ -43,6 +43,7 @@ class SettingsRepository(private val context: Context) {
         val IS_DEFAULT_LAUNCHER = booleanPreferencesKey("is_default_launcher")
         val SHOW_EXIT_LAUNCHER = booleanPreferencesKey("show_exit_launcher")
         val LAUNCHER_EXIT_CONFIRMATION = booleanPreferencesKey("launcher_exit_confirmation")
+        val FAMILY_CONTACTS_PER_PAGE = intPreferencesKey("family_contacts_per_page")
     }
 
     // 语音设置
@@ -89,7 +90,8 @@ class SettingsRepository(private val context: Context) {
             password = preferences[PASSWORD] ?: "",
             isDefaultLauncher = preferences[IS_DEFAULT_LAUNCHER] ?: false,
             showExitLauncher = preferences[SHOW_EXIT_LAUNCHER] ?: true,
-            launcherExitConfirmation = preferences[LAUNCHER_EXIT_CONFIRMATION] ?: true
+            launcherExitConfirmation = preferences[LAUNCHER_EXIT_CONFIRMATION] ?: true,
+            familyContactsPerPage = normalizeFamilyContactsPerPage(preferences[FAMILY_CONTACTS_PER_PAGE] ?: 2)
         )
     }
 
@@ -148,6 +150,19 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun updateLauncherExitConfirmation(needConfirmation: Boolean) {
         dataStore.edit { it[LAUNCHER_EXIT_CONFIRMATION] = needConfirmation }
+    }
+
+    suspend fun updateFamilyContactsPerPage(count: Int) {
+        dataStore.edit { it[FAMILY_CONTACTS_PER_PAGE] = normalizeFamilyContactsPerPage(count) }
+    }
+
+    private fun normalizeFamilyContactsPerPage(count: Int): Int {
+        return when {
+            count <= 2 -> 2
+            count <= 4 -> 4
+            count <= 6 -> 6
+            else -> 8
+        }
     }
 
     /**

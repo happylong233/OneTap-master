@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneTap 老人首页 v2</title>
+  <style>
+    :root {
+      --bg: #f7f8f6;
+      --panel: #ffffff;
+      --ink: #171717;
+      --muted: #5f666d;
+      --line: #d9e0df;
+      --green: #0d9f63;
+      --blue: #2364d8;
+      --orange: #f26a2e;
+      --shadow: 0 8px 22px rgba(31, 44, 48, .11);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #dfe4ea;
+      font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+
+    .phone {
+      width: min(430px, 100vw);
+      height: min(932px, 100vh);
+      background: var(--bg);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .24);
+    }
+
+    .screen {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 16px 18px;
+      gap: 14px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 72px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 650;
+    }
+
+    .settings {
+      border: 2px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 18px;
+      min-width: 122px;
+      min-height: 62px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 20px;
+      font-weight: 850;
+      box-shadow: var(--shadow);
+    }
+
+    .contacts {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 2px 2px 8px;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .main-row {
+      display: grid;
+      grid-template-columns: 168px minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .photo {
+      height: 168px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #cdd8d6, #eef2ef);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .photo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 52% 40%, #e6c3a9 0 23%, transparent 24%),
+        radial-gradient(circle at 38% 34%, #2e2a28 0 2.8%, transparent 3.2%),
+        radial-gradient(circle at 62% 34%, #2e2a28 0 2.8%, transparent 3.2%),
+        radial-gradient(ellipse at 50% 78%, #db9f91 0 25%, transparent 26%);
+      opacity: .9;
+    }
+
+    .person {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .relation {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .name {
+      margin-top: 2px;
+      font-size: 36px;
+      line-height: 1.05;
+      font-weight: 950;
+      word-break: break-word;
+    }
+
+    .primary {
+      border: 0;
+      background: var(--green);
+      color: #fff;
+      border-radius: 18px;
+      min-height: 72px;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 27px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .secondary-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .phone-call {
+      border: 2px solid #20343d;
+      background: #fafdff;
+      color: #10242e;
+      border-radius: 18px;
+      min-height: 68px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 25px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .voice {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      min-height: 48px;
+      padding: 0 10px;
+      font-size: 16px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .video {
+      border: 0;
+      border-radius: 22px;
+      background: var(--orange);
+      color: #fff;
+      min-height: 86px;
+      font-size: 30px;
+      font-weight: 950;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      box-shadow: 0 8px 20px rgba(242, 106, 46, .24);
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .icon {
+      font-size: 1.14em;
+      line-height: 1;
+    }
+
+    @media (max-width: 390px) {
+      .screen {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .settings {
+        min-width: 106px;
+        font-size: 18px;
+      }
+
+      .main-row {
+        grid-template-columns: 148px minmax(0, 1fr);
+      }
+
+      .photo {
+        height: 148px;
+      }
+
+      .name {
+        font-size: 31px;
+      }
+
+      .primary {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <section class="screen">
+      <header class="topbar">
+        <div>
+          <h1>找家人</h1>
+          <div class="subtitle">点照片或按钮都可以联系</div>
+        </div>
+        <button class="settings" type="button">
+          <span class="icon">⚙</span>
+          家属
+        </button>
+      </header>
+
+      <section class="contacts">
+        <article class="card">
+          <div class="main-row">
+            <div class="photo" aria-label="大孙女照片"></div>
+            <div class="person">
+              <div>
+                <div class="relation">家人</div>
+                <div class="name">大孙女</div>
+              </div>
+              <button class="primary" type="button">
+                <span class="icon">▶</span>
+                打视频
+              </button>
+            </div>
+          </div>
+          <div class="secondary-row">
+            <button class="phone-call" type="button">
+              <span class="icon">☎</span>
+              打电话
+            </button>
+            <button class="voice" type="button">语音通话</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="main-row">
+            <div class="photo" aria-label="二儿子照片"></div>
+            <div class="person">
+              <div>
+                <div class="relation">家人</div>
+                <div class="name">二儿子</div>
+              </div>
+              <button class="primary" type="button">
+                <span class="icon">▶</span>
+                打视频
+              </button>
+            </div>
+          </div>
+          <div class="secondary-row">
+            <button class="phone-call" type="button">
+              <span class="icon">☎</span>
+              打电话
+            </button>
+            <button class="voice" type="button">语音通话</button>
+          </div>
+        </article>
+      </section>
+
+      <footer class="bottom">
+        <button class="video" type="button">
+          <span class="icon">▣</span>
+          看视频
+        </button>
+        <div class="hint">按手机主页键也会回到这里</div>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>

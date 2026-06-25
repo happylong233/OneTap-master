@@ -221,6 +221,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateFamilyContactsPerPage(count: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateFamilyContactsPerPage(count)
+        }
+    }
+
     fun updateOneTapPhoneEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateOneTapPhoneEnabled(enabled)

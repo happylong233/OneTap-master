@@ -14,14 +14,24 @@ import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.Toast
 
 object WeChatAutomationController {
+    private enum class ClickSafety {
+        Safe,
+        NoWindows,
+        InputMethod,
+        BlockedByOtherWindow,
+        NotInWechat
+    }
+
     private const val WECHAT_PKG = "com.tencent.mm"
     private const val TASK_TIMEOUT_MS = 30_000L
     private const val RETRY_DELAY_MS = 700L
     private const val PREPARE_HOME_DELAY_MS = 700L
     private const val WAIT_WECHAT_DELAY_MS = 1000L
+    private const val WAIT_BLOCKING_WINDOW_DELAY_MS = 1200L
     private const val MAX_HOME_BACK_COUNT = 8
     private const val MAX_WECHAT_RELAUNCH_COUNT = 3
     private const val TAG = "WeChatAutomation"
@@ -54,6 +64,11 @@ object WeChatAutomationController {
     private var searchCoordinateAttempt = 0
     private var contactResultCoordinateAttempt = 0
     private var pasteInputAttempt = 0
+    private var pasteFallbackInProgress = false
+    private var lastClickBlockedByWindow = false
+    private var lastClickBlockedReason = ""
+    private var lastBlockedWindowAnnouncementAt = 0L
+    private val announcedKeys = mutableSetOf<String>()
     private var lastActivityName = ""
     private var nextAllowedRunAt = 0L
 
@@ -62,6 +77,7 @@ object WeChatAutomationController {
 
     var onFailure: ((String) -> Unit)? = null
     var onOpenedCallUi: ((Boolean) -> Unit)? = null
+    var onAnnouncement: ((String) -> Unit)? = null
 
     fun hasActiveTask(): Boolean = WeChatCallTask.running
 
@@ -76,8 +92,9 @@ object WeChatAutomationController {
                 ?.coerceToText(context)
                 ?.toString()
             val match = readBack == target
-            Log.d(TAG, "setTargetClipboard target=<$target> readBack=<$readBack> match=$match")
-            match
+            val readable = readBack != null
+            Log.d(TAG, "setTargetClipboard target=<$target> readBack=<$readBack> readable=$readable match=$match")
+            match || !readable
         } catch (e: Throwable) {
             Log.e(TAG, "setTargetClipboard failed", e)
             false
@@ -94,6 +111,11 @@ object WeChatAutomationController {
         searchCoordinateAttempt = 0
         contactResultCoordinateAttempt = 0
         pasteInputAttempt = 0
+        pasteFallbackInProgress = false
+        lastClickBlockedByWindow = false
+        lastClickBlockedReason = ""
+        lastBlockedWindowAnnouncementAt = 0L
+        announcedKeys.clear()
         lastActivityName = ""
         nextAllowedRunAt = 0L
         isProcessing = false
@@ -114,6 +136,11 @@ object WeChatAutomationController {
         searchCoordinateAttempt = 0
         contactResultCoordinateAttempt = 0
         pasteInputAttempt = 0
+        pasteFallbackInProgress = false
+        lastClickBlockedByWindow = false
+        lastClickBlockedReason = ""
+        lastBlockedWindowAnnouncementAt = 0L
+        announcedKeys.clear()
         lastActivityName = ""
         nextAllowedRunAt = 0L
         isProcessing = false
@@ -280,6 +307,7 @@ object WeChatAutomationController {
     }
 
     private fun tapSearch(service: AccessibilityService, root: AccessibilityNodeInfo) {
+        announceOnce("search", "\u6b63\u5728\u67e5\u627e\u8054\u7cfb\u4eba${WeChatCallTask.targetName}")
         if (findEditable(root) != null) {
             searchCoordinateAttempt = 0
             WeChatCallTask.next(WeChatCallStep.ENTER_TARGET_NAME)
@@ -339,10 +367,14 @@ object WeChatAutomationController {
             return
         }
         clickNodeOrParentOrBounds(input, service)
-        if (setText(input, WeChatCallTask.targetName)) {
+        if (pasteToRealInput(service, input, WeChatCallTask.targetName)) {
             searchCoordinateAttempt = 0
-            WeChatCallTask.next(WeChatCallStep.TAP_CONTACT_RESULT)
-            finishAndSchedule(service, 1600L)
+            scheduleVerifyTargetEntered(service, "direct input")
+            finishProcessing()
+        } else if (searchPageOpened) {
+            Log.w(TAG, "enterTargetName: direct input failed, use coordinate paste fallback")
+            enterByCoordinatePasteOrKeyboard(service, WeChatCallTask.targetName)
+            finishProcessing()
         } else {
             finishProcessing()
             retryOrFail(service, "search input not found")
@@ -353,7 +385,7 @@ object WeChatAutomationController {
         val byList = findByViewId(root, WeChatId.LIST.id)
         val byName = findNodeByText(root, WeChatCallTask.targetName)
             ?: findNodeByDescription(root, WeChatCallTask.targetName)
-        val result = byList ?: byName
+        val result = byName ?: byList
         val inChat = isLikelyChatPage(root)
         Log.d(TAG, "tapContactResult: listFound=${byList != null} nameFound=${byName != null} inChat=$inChat activity=$lastActivityName")
         if (byList == null && byName == null && pasteInputAttempt < 1 && !pageContainsText(root, WeChatCallTask.targetName)) {
@@ -367,11 +399,13 @@ object WeChatAutomationController {
             }
         }
         if (inChat) {
+            announceOnce("chat_opened", "\u5df2\u627e\u5230\u8054\u7cfb\u4eba\uff0c\u6b63\u5728\u6253\u5f00\u901a\u8bdd")
             WeChatCallTask.next(WeChatCallStep.TAP_MORE)
             finishAndSchedule(service, 700L)
             return
         }
         if (clickNodeOrParentOrBounds(result, service)) {
+            announceOnce("chat_opened", "\u5df2\u627e\u5230\u8054\u7cfb\u4eba\uff0c\u6b63\u5728\u6253\u5f00\u901a\u8bdd")
             contactResultCoordinateAttempt = 0
             WeChatCallTask.next(WeChatCallStep.TAP_MORE)
             finishAndSchedule(service, 1000L)
@@ -379,6 +413,7 @@ object WeChatAutomationController {
             contactResultCoordinateAttempt < CONTACT_RESULT_COORDINATES_LIMIT &&
             clickLikelyContactResult(root, service, contactResultCoordinateAttempt)
         ) {
+            announceOnce("chat_opened", "\u5df2\u627e\u5230\u8054\u7cfb\u4eba\uff0c\u6b63\u5728\u6253\u5f00\u901a\u8bdd")
             contactResultCoordinateAttempt += 1
             Log.d(TAG, "tapContactResult: clicked likely result row attempt=$contactResultCoordinateAttempt")
             WeChatCallTask.next(WeChatCallStep.TAP_MORE)
@@ -390,6 +425,7 @@ object WeChatAutomationController {
     }
 
     private fun tapMore(service: AccessibilityService, root: AccessibilityNodeInfo) {
+        announceOnce("open_call_menu", "\u6b63\u5728\u6253\u5f00\u901a\u8bdd\u83dc\u5355")
         val more = findByViewId(root, WeChatId.MORE.id)
             ?: findNodeByDescription(root, TEXT_MORE_BUTTON)
             ?: findNodeByDescription(root, TEXT_MORE)
@@ -407,10 +443,18 @@ object WeChatAutomationController {
     }
 
     private fun tapCallEntry(service: AccessibilityService, root: AccessibilityNodeInfo) {
+        announceOnce(
+            "select_call_entry",
+            if (WeChatCallTask.callType == WeChatCallType.VIDEO) {
+                "\u6b63\u5728\u9009\u62e9\u89c6\u9891\u901a\u8bdd"
+            } else {
+                "\u6b63\u5728\u9009\u62e9\u8bed\u97f3\u901a\u8bdd"
+            }
+        )
         val callEntry = listOf(TEXT_VIDEO_CALL, TEXT_AUDIO_VIDEO_CALL, TEXT_VOICE_CALL)
             .firstNotNullOfOrNull { findNodeByText(root, it) ?: findNodeByDescription(root, it) }
         Log.d(TAG, "tapCallEntry: found=${callEntry != null}")
-        if (clickNodeOrParentOrBounds(callEntry, service)) {
+        if (clickNodeOrParentOrBounds(callEntry, service) || clickLikelyVideoCallEntry(service)) {
             WeChatCallTask.next(WeChatCallStep.TAP_CALL_TYPE)
             finishAndSchedule(service)
         } else {
@@ -420,13 +464,20 @@ object WeChatAutomationController {
     }
 
     private fun tapCallType(service: AccessibilityService, root: AccessibilityNodeInfo) {
+        announceOnce(
+            "start_call",
+            if (WeChatCallTask.callType == WeChatCallType.VIDEO) {
+                "\u6b63\u5728\u53d1\u8d77\u89c6\u9891\u901a\u8bdd"
+            } else {
+                "\u6b63\u5728\u53d1\u8d77\u8bed\u97f3\u901a\u8bdd"
+            }
+        )
         val label = if (WeChatCallTask.callType == WeChatCallType.VIDEO) TEXT_VIDEO_CALL else TEXT_VOICE_CALL
-        val option = findNodeByText(root, label) ?: findNodeByDescription(root, label)
+        val option = findNodeByText(root, label)
+            ?: findNodeByDescription(root, label)
+            ?: findNodeByTextAcrossWindows(service, label)
         Log.d(TAG, "tapCallType: label=$label found=${option != null}")
-        if (clickNodeOrParentOrBounds(option, service)) {
-            finishProcessing()
-            successFinish()
-        } else if (WeChatCallTask.callType == WeChatCallType.VIDEO) {
+        if (clickNodeOrParentOrBounds(option, service) || clickLikelyCallTypeOption(service, WeChatCallTask.callType)) {
             finishProcessing()
             successFinish()
         } else {
@@ -516,7 +567,32 @@ object WeChatAutomationController {
         isProcessing = false
     }
 
+    private fun announceOnce(key: String, message: String) {
+        if (announcedKeys.add(key)) {
+            Log.d(TAG, "announce key=$key message=$message")
+            onAnnouncement?.invoke(message)
+        }
+    }
+
+    private fun announceBlockedWindow() {
+        val now = System.currentTimeMillis()
+        if (now - lastBlockedWindowAnnouncementAt < 5_000L) return
+        lastBlockedWindowAnnouncementAt = now
+        Log.d(TAG, "announce blocked window reason=$lastClickBlockedReason")
+        onAnnouncement?.invoke("\u6709\u5f39\u7a97\u6321\u4f4f\u4e86\uff0c\u6211\u7b49\u4e00\u4e0b\u518d\u7ee7\u7eed")
+    }
+
     private fun retryOrFail(service: AccessibilityService, reason: String) {
+        if (consumeClickBlockedByWindow()) {
+            announceBlockedWindow()
+            Log.d(
+                TAG,
+                "wait blocked window step=${WeChatCallTask.step.value}, retry=${WeChatCallTask.retryCount}, reason=$reason blocked=$lastClickBlockedReason"
+            )
+            finishProcessing()
+            scheduleRetry(service, WAIT_BLOCKING_WINDOW_DELAY_MS)
+            return
+        }
         if (WeChatCallTask.canRetry()) {
             Log.d(TAG, "retry step=${WeChatCallTask.step.value}, retry=${WeChatCallTask.retryCount}, reason=$reason")
             finishProcessing()
@@ -564,6 +640,11 @@ object WeChatAutomationController {
         searchCoordinateAttempt = 0
         contactResultCoordinateAttempt = 0
         pasteInputAttempt = 0
+        pasteFallbackInProgress = false
+        lastClickBlockedByWindow = false
+        lastClickBlockedReason = ""
+        lastBlockedWindowAnnouncementAt = 0L
+        announcedKeys.clear()
         nextAllowedRunAt = 0L
         isProcessing = false
         WeChatCallTask.reset()
@@ -580,6 +661,11 @@ object WeChatAutomationController {
         searchCoordinateAttempt = 0
         contactResultCoordinateAttempt = 0
         pasteInputAttempt = 0
+        pasteFallbackInProgress = false
+        lastClickBlockedByWindow = false
+        lastClickBlockedReason = ""
+        lastBlockedWindowAnnouncementAt = 0L
+        announcedKeys.clear()
         nextAllowedRunAt = 0L
         isProcessing = false
         WeChatCallTask.reset()
@@ -723,7 +809,13 @@ object WeChatAutomationController {
         service: AccessibilityService,
         targetName: String
     ): Boolean {
+        if (pasteFallbackInProgress) {
+            Log.d(TAG, "enterByCoordinatePasteOrKeyboard: fallback already in progress")
+            return true
+        }
+        pasteFallbackInProgress = true
         if (!setTargetClipboard(service, targetName)) {
+            pasteFallbackInProgress = false
             failAndReset(service, "\u526a\u8d34\u677f\u5199\u5165\u5931\u8d25")
             return false
         }
@@ -734,13 +826,27 @@ object WeChatAutomationController {
         performClick(service, inputX, inputY)
 
         handler.postDelayed({
-            val pastedByFocus = pasteToFocusedInputAcrossWindows(service)
-            Log.d(TAG, "enterByCoordinatePasteOrKeyboard: paste focused result=$pastedByFocus")
+            if (!WeChatCallTask.running) {
+                pasteFallbackInProgress = false
+                return@postDelayed
+            }
+            val focusedInput = findFocusedRealInputAcrossWindows(service)
+            val pastedByFocus = focusedInput?.let {
+                val result = pasteToRealInput(service, it, WeChatCallTask.targetName)
+                Log.d(TAG, "enterByCoordinatePasteOrKeyboard: paste focused result=$result")
+                result
+            } == true
+            if (focusedInput == null) {
+                Log.d(TAG, "enterByCoordinatePasteOrKeyboard: no focused real input, use long press directly")
+            }
             if (!pastedByFocus) {
-                longPressAndClickPaste(service, inputX, inputY)
+                val dispatched = longPressAndClickPaste(service, inputX, inputY)
+                if (!dispatched) {
+                    pasteFallbackInProgress = false
+                    retryOrFail(service, "search input paste gesture failed")
+                }
             } else {
-                WeChatCallTask.next(WeChatCallStep.TAP_CONTACT_RESULT)
-                scheduleRetry(service, 1500L)
+                scheduleVerifyTargetEntered(service, "focused input")
             }
         }, 350L)
         return true
@@ -750,7 +856,43 @@ object WeChatAutomationController {
         setTargetClipboard(service, text)
     }
 
-    private fun pasteToFocusedInputAcrossWindows(service: AccessibilityService): Boolean {
+    private fun scheduleVerifyTargetEntered(
+        service: AccessibilityService,
+        source: String,
+        delayMs: Long = 900L
+    ) {
+        handler.postDelayed({
+            if (!WeChatCallTask.running) return@postDelayed
+            val targetName = WeChatCallTask.targetName
+            val entered = pageContainsTextAcrossWindows(service, targetName)
+            Log.d(TAG, "verifyTargetEntered source=$source entered=$entered target=<$targetName>")
+            if (entered) {
+                pasteFallbackInProgress = false
+                pasteInputAttempt = 0
+                WeChatCallTask.next(WeChatCallStep.TAP_CONTACT_RESULT)
+                scheduleRetry(service, 900L)
+                return@postDelayed
+            }
+
+            if (pasteInputAttempt < 2) {
+                pasteInputAttempt += 1
+                val input = findRealSearchInputAcrossWindows(service)
+                val pasted = pasteToRealInput(service, input, targetName)
+                Log.d(TAG, "verifyTargetEntered: retry direct paste attempt=$pasteInputAttempt result=$pasted")
+                if (pasted) {
+                    scheduleVerifyTargetEntered(service, "verify retry $pasteInputAttempt")
+                } else {
+                    pasteFallbackInProgress = false
+                    enterByCoordinatePasteOrKeyboard(service, targetName)
+                }
+            } else {
+                pasteFallbackInProgress = false
+                retryOrFail(service, "search input text not entered after $source")
+            }
+        }, delayMs)
+    }
+
+    private fun findFocusedRealInputAcrossWindows(service: AccessibilityService): AccessibilityNodeInfo? {
         getWindowRoots(service).forEach { root ->
             val focus = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             if (focus != null) {
@@ -761,14 +903,17 @@ object WeChatAutomationController {
                     Log.w(TAG, "pasteToFocusedInputAcrossWindows: focused input invalid, ignore ACTION_PASTE")
                     return@forEach
                 }
-                focus.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                focus.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                val pasteOk = focus.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                val setOk = setText(focus, WeChatCallTask.targetName)
-                if (pasteOk || setOk) return true
+                return focus
             }
         }
-        return false
+        return null
+    }
+
+    private fun pageContainsTextAcrossWindows(
+        service: AccessibilityService,
+        keyword: String
+    ): Boolean {
+        return getWindowRoots(service).any { pageContainsText(it, keyword) }
     }
 
     private fun longPressAndClickPaste(
@@ -776,6 +921,12 @@ object WeChatAutomationController {
         x: Float,
         y: Float
     ): Boolean {
+        val safety = checkWechatClickPoint(service, x, y)
+        if (safety != ClickSafety.Safe) {
+            markClickBlockedByWindow(safety)
+            Log.w(TAG, "longPressAndClickPaste rejected unsafe point x=$x y=$y reason=$safety")
+            return false
+        }
         Log.d(TAG, "longPressAndClickPaste x=$x y=$y")
         val path = Path().apply { moveTo(x, y) }
         val gesture = android.accessibilityservice.GestureDescription.Builder()
@@ -792,28 +943,71 @@ object WeChatAutomationController {
             object : AccessibilityService.GestureResultCallback() {
                 override fun onCompleted(gestureDescription: android.accessibilityservice.GestureDescription?) {
                     handler.postDelayed({
+                        if (!WeChatCallTask.running) {
+                            pasteFallbackInProgress = false
+                            return@postDelayed
+                        }
                         val pasteNode = findNodeByTextAcrossWindows(service, "\u7c98\u8d34")
                         val clicked = if (pasteNode != null) {
                             Log.d(TAG, "longPressAndClickPaste: paste menu found")
-                            clickNodeOrParentOrBounds(pasteNode, service)
+                            clickNodeOrParentOrBounds(pasteNode, service) ||
+                                clickPasteMenuByNodeBounds(service, pasteNode) ||
+                                clickPasteMenuByCoordinate(service, x, y)
                         } else {
                             Log.w(TAG, "longPressAndClickPaste: paste menu not found")
                             clickPasteMenuByCoordinate(service, x, y)
                         }
                         Log.d(TAG, "longPressAndClickPaste: click paste result=$clicked")
                         if (clicked) {
+                            pasteFallbackInProgress = false
+                            pasteInputAttempt = 0
                             WeChatCallTask.next(WeChatCallStep.TAP_CONTACT_RESULT)
-                            scheduleRetry(service, 1500L)
+                            scheduleRetry(service, 1300L)
+                        } else {
+                            pasteFallbackInProgress = false
+                            retryOrFail(service, "search input paste menu not clicked")
                         }
-                    }, 350L)
+                    }, 650L)
                 }
 
                 override fun onCancelled(gestureDescription: android.accessibilityservice.GestureDescription?) {
                     Log.w(TAG, "longPressAndClickPaste: cancelled")
+                    if (WeChatCallTask.running) {
+                        pasteFallbackInProgress = false
+                        retryOrFail(service, "search input paste gesture cancelled")
+                    }
                 }
             },
             null
         )
+    }
+
+    private fun clickPasteMenuByNodeBounds(
+        service: AccessibilityService,
+        node: AccessibilityNodeInfo
+    ): Boolean {
+        var current: AccessibilityNodeInfo? = node
+        var depth = 0
+        while (current != null && depth < 5) {
+            val rect = Rect()
+            current.getBoundsInScreen(rect)
+            Log.d(TAG, "clickPasteMenuByNodeBounds depth=$depth rect=$rect class=${current.className}")
+            if (!rect.isEmpty && rect.width() > 2 && rect.height() > 2) {
+                val candidates = listOf(
+                    rect.centerX().toFloat() to rect.centerY().toFloat(),
+                    rect.left + rect.width() * 0.35f to rect.centerY().toFloat(),
+                    rect.left + rect.width() * 0.65f to rect.centerY().toFloat()
+                )
+                candidates.forEachIndexed { index, point ->
+                    val (x, y) = point
+                    Log.d(TAG, "clickPasteMenuByNodeBounds attempt=$index x=$x y=$y")
+                    if (performClick(service, x, y)) return true
+                }
+            }
+            current = current.parent
+            depth += 1
+        }
+        return false
     }
 
     private fun clickPasteMenuByCoordinate(
@@ -822,11 +1016,14 @@ object WeChatAutomationController {
         inputY: Float
     ): Boolean {
         val screen = getScreenSize(service)
+        val menuY = (inputY + screen.y * 0.055f).coerceIn(screen.y * 0.08f, screen.y * 0.22f)
         val candidates = listOf(
-            screen.x * 0.16f to screen.y * 0.155f,
-            screen.x * 0.22f to screen.y * 0.155f,
-            inputX - screen.x * 0.25f to inputY + screen.y * 0.07f,
-            inputX - screen.x * 0.18f to inputY + screen.y * 0.07f
+            inputX - screen.x * 0.38f to menuY,
+            inputX - screen.x * 0.30f to menuY,
+            inputX - screen.x * 0.22f to menuY,
+            screen.x * 0.12f to menuY,
+            screen.x * 0.18f to menuY,
+            screen.x * 0.24f to menuY
         )
         candidates.forEachIndexed { index, point ->
             val (cx, cy) = point
@@ -1046,11 +1243,11 @@ object WeChatAutomationController {
         val width = screen.x
         val top = if (rect.top > 0) rect.top else 0
         val candidates = listOf(
-            width / 2f to top + 320f,
-            width / 2f to top + 410f,
-            width / 2f to top + 500f,
-            width / 2f to top + 590f,
-            width / 2f to top + 680f
+            width / 2f to top + 600f,
+            width / 2f to top + 520f,
+            width / 2f to top + 680f,
+            width / 2f to top + 760f,
+            width / 2f to top + 840f
         )
         val (x, y) = candidates.getOrNull(attempt) ?: return false
         Log.d(TAG, "tapContactResult: fallback result coordinate attempt=$attempt x=$x y=$y rootRect=$rect")
@@ -1061,17 +1258,92 @@ object WeChatAutomationController {
         val screen = getScreenSize(service)
         val width = screen.x.toFloat()
         val height = screen.y.toFloat()
+        val wechatRect = findWechatWindowBounds(service)
+        val right = wechatRect?.right?.toFloat() ?: width
+        val bottom = wechatRect?.bottom?.toFloat() ?: height
+        val keyboardTop = findInputMethodTop(service)
+        val inputBarY = keyboardTop?.let { (it - 70f).coerceIn(height * 0.45f, height - 120f) }
         val candidates = listOf(
+            inputBarY?.let { width - 70f to it },
+            inputBarY?.let { width - 110f to it },
+            inputBarY?.let { width - 150f to it },
+            right - 72f to bottom - 78f,
+            right - 92f to bottom - 78f,
+            right - 72f to bottom - 105f,
             width - 70f to height - 165f,
             width - 100f to height - 210f,
             width - 150f to height - 165f
-        )
+        ).filterNotNull()
         candidates.forEachIndexed { index, point ->
             val (x, y) = point
-            Log.d(TAG, "tapMore: fallback more coordinate attempt=$index x=$x y=$y")
+            Log.d(TAG, "tapMore: fallback more coordinate attempt=$index x=$x y=$y keyboardTop=$keyboardTop wechatRect=$wechatRect")
             if (performClick(service, x, y)) return true
         }
         return false
+    }
+
+    private fun clickLikelyVideoCallEntry(service: AccessibilityService): Boolean {
+        val screen = getScreenSize(service)
+        val width = screen.x.toFloat()
+        val height = screen.y.toFloat()
+        val wechatRect = findWechatWindowBounds(service)
+        val left = wechatRect?.left?.toFloat() ?: 0f
+        val right = wechatRect?.right?.toFloat() ?: width
+        val bottom = wechatRect?.bottom?.toFloat() ?: height
+        val windowWidth = right - left
+        val candidates = listOf(
+            left + windowWidth * 0.625f to bottom - 780f,
+            left + windowWidth * 0.625f to bottom - 720f,
+            left + windowWidth * 0.625f to bottom - 850f,
+            left + windowWidth * 0.625f to height * 0.72f
+        )
+        candidates.forEachIndexed { index, point ->
+            val (x, y) = point
+            Log.d(TAG, "tapCallEntry: fallback video call coordinate attempt=$index x=$x y=$y wechatRect=$wechatRect")
+            if (performClick(service, x, y)) return true
+        }
+        return false
+    }
+
+    private fun clickLikelyCallTypeOption(
+        service: AccessibilityService,
+        callType: WeChatCallType
+    ): Boolean {
+        val screen = getScreenSize(service)
+        val width = screen.x.toFloat()
+        val height = screen.y.toFloat()
+        val wechatRect = findWechatWindowBounds(service)
+        val left = wechatRect?.left?.toFloat() ?: 0f
+        val right = wechatRect?.right?.toFloat() ?: width
+        val bottom = wechatRect?.bottom?.toFloat() ?: height
+        val centerX = left + (right - left) / 2f
+        val primaryY = if (callType == WeChatCallType.VIDEO) bottom - 460f else bottom - 260f
+        val secondaryY = if (callType == WeChatCallType.VIDEO) bottom - 520f else bottom - 320f
+        val candidates = listOf(
+            centerX to primaryY,
+            centerX to secondaryY,
+            centerX to (if (callType == WeChatCallType.VIDEO) height * 0.82f else height * 0.89f)
+        )
+        candidates.forEachIndexed { index, point ->
+            val (x, y) = point
+            Log.d(TAG, "tapCallType: fallback call type coordinate attempt=$index type=$callType x=$x y=$y wechatRect=$wechatRect")
+            if (performClick(service, x, y)) return true
+        }
+        return false
+    }
+
+    private fun findInputMethodTop(service: AccessibilityService): Int? {
+        return runCatching {
+            service.windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+                ?.let { window ->
+                    val rect = Rect()
+                    window.getBoundsInScreen(rect)
+                    Log.d(TAG, "findInputMethodTop: rect=$rect")
+                    rect.top.takeIf { !rect.isEmpty && it > 0 }
+                }
+        }.onFailure {
+            Log.w(TAG, "findInputMethodTop failed", it)
+        }.getOrNull()
     }
 
     private fun isLikelyChatPage(root: AccessibilityNodeInfo): Boolean {
@@ -1124,6 +1396,12 @@ object WeChatAutomationController {
     }
 
     private fun performClick(service: AccessibilityService, x: Float, y: Float): Boolean {
+        val safety = checkWechatClickPoint(service, x, y)
+        if (safety != ClickSafety.Safe) {
+            markClickBlockedByWindow(safety)
+            Log.w(TAG, "performClick rejected unsafe point x=$x y=$y reason=$safety")
+            return false
+        }
         val path = Path().apply {
             moveTo(x, y)
             lineTo(x + 1f, y + 1f)
@@ -1143,6 +1421,72 @@ object WeChatAutomationController {
         )
         Log.d(TAG, "performClick x=$x y=$y result=$result")
         return result
+    }
+
+    private fun isSafeWechatClickPoint(service: AccessibilityService, x: Float, y: Float): Boolean {
+        return checkWechatClickPoint(service, x, y) == ClickSafety.Safe
+    }
+
+    private fun checkWechatClickPoint(service: AccessibilityService, x: Float, y: Float): ClickSafety {
+        val px = x.toInt()
+        val py = y.toInt()
+        val windows = runCatching { service.windows }.getOrNull().orEmpty()
+        if (windows.isEmpty()) {
+            Log.w(TAG, "isSafeWechatClickPoint: no windows available")
+            return ClickSafety.NoWindows
+        }
+
+        var sawWechat = false
+        windows.forEachIndexed { index, window ->
+            val rect = Rect()
+            window.getBoundsInScreen(rect)
+            if (rect.isEmpty || !rect.contains(px, py)) return@forEachIndexed
+
+            val pkg = window.root?.packageName?.toString()
+            if (pkg == WECHAT_PKG) {
+                sawWechat = true
+                Log.d(TAG, "isSafeWechatClickPoint: point accepted by WeChat window index=$index rect=$rect")
+                return ClickSafety.Safe
+            }
+
+            if (window.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+                Log.w(TAG, "isSafeWechatClickPoint: point is inside input method rect=$rect")
+                return ClickSafety.InputMethod
+            }
+
+            Log.w(TAG, "isSafeWechatClickPoint: point blocked by window index=$index type=${window.type} pkg=$pkg rect=$rect")
+            return ClickSafety.BlockedByOtherWindow
+        }
+
+        if (!sawWechat) {
+            Log.w(TAG, "isSafeWechatClickPoint: point not inside any WeChat window x=$x y=$y")
+        }
+        return ClickSafety.NotInWechat
+    }
+
+    private fun markClickBlockedByWindow(safety: ClickSafety) {
+        lastClickBlockedByWindow = true
+        lastClickBlockedReason = safety.name
+    }
+
+    private fun consumeClickBlockedByWindow(): Boolean {
+        val blocked = lastClickBlockedByWindow
+        lastClickBlockedByWindow = false
+        return blocked
+    }
+
+    private fun findWechatWindowBounds(service: AccessibilityService): Rect? {
+        return runCatching {
+            service.windows.firstNotNullOfOrNull { window ->
+                val rootPkg = window.root?.packageName?.toString()
+                if (rootPkg != WECHAT_PKG) return@firstNotNullOfOrNull null
+                val rect = Rect()
+                window.getBoundsInScreen(rect)
+                rect.takeIf { !it.isEmpty }
+            }
+        }.onFailure {
+            Log.w(TAG, "findWechatWindowBounds failed", it)
+        }.getOrNull()
     }
 
     private fun setText(node: AccessibilityNodeInfo?, text: String): Boolean {

@@ -72,6 +72,9 @@ class MainViewModel @Inject constructor(
                 }
             )
         }
+        WeChatAutomationController.onAnnouncement = { message ->
+            speak(message)
+        }
     }
 
     fun resetToFamilyPage() {
@@ -196,5 +199,6 @@ class MainViewModel @Inject constructor(
         super.onCleared()
         WeChatAutomationController.onFailure = null
         WeChatAutomationController.onOpenedCallUi = null
+        WeChatAutomationController.onAnnouncement = null
     }
 }
