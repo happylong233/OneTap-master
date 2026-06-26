@@ -1,149 +1,133 @@
 # OneTap
 
-OneTap 是一款面向长辈使用、由家属配置的 Android 简化桌面应用。当前实现把主界面收敛为两个老人端页面：`找家人` 和 `看视频/常用软件`，让长辈通过大按钮、大照片和语音提示完成最常见的联系家人、打开软件、返回桌面的操作。
+给长辈用的 Android 简化桌面。家属先配置家人和常用软件，长辈主要只看到两个入口：`找家人`、`常用软件`。
 
 <p align="center">
   <img src="app/src/main/ic_launcher-playstore.png" width="128" height="128" alt="OneTap app icon">
 </p>
 
-## 当前定位
+<p align="center">
+  <img alt="Android" src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white">
+  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white">
+  <img alt="Jetpack Compose" src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4">
+  <img alt="minSdk" src="https://img.shields.io/badge/minSdk-24-blue">
+  <img alt="targetSdk" src="https://img.shields.io/badge/targetSdk-35-blue">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
+</p>
 
-OneTap 不是完整通讯录，也不是通用桌面启动器。它更像一个“家属先配置、长辈少选择”的极简桌面：
+## 这是什么
 
-- 老人端首页优先展示家人照片，点击照片后选择微信视频、微信语音或电话。
-- 常用软件页只展示家属选好的少量应用，避免长辈在系统应用列表里寻找。
-- 家属设置集中管理联系人、常用软件、微信辅助、电话权限、显示效果和报时设置。
-- 应用可作为 Android 默认桌面，按系统主页键会回到 OneTap。
+OneTap 目前实现的是一个老人端桌面：
 
-## 已实现功能
+- `找家人`：显示家人照片，点击后选择微信视频、微信语音或直接打电话。
+- `常用软件`：显示家属挑好的应用，最多 6 个，点击直接打开。
+- 可设为系统默认桌面，按主页键会回到 OneTap。
+- 提供长按当点击、默认最大音量、整点语音报时等辅助设置。
 
-### 老人端桌面
+它不是完整通讯录，也不是通用 Launcher。当前目标很窄：减少长辈在手机里找人、找软件、找按钮的步骤。
 
-- 主入口为 `ElderHomeShell`，包含 `找家人` 和 `常用软件` 两页。
-- `找家人` 页按设置显示 2、4、6 或 8 个家人照片卡片。
-- `常用软件` 页最多显示 6 个由家属启用的应用。
-- 支持大按钮、大图标、长按也当作点击，降低误触和操作门槛。
-- 支持作为系统 HOME 桌面，进入或回到主界面时默认切回 `找家人` 页。
+## 快速开始
 
-### 家人联系
-
-- 支持新增、编辑、删除联系人。
-- 联系人字段包括显示名称、关系称呼、手机号、微信备注名、微信号、头像、默认联系方式、是否显示在首页、是否紧急联系人。
-- 老人端点击家人照片后弹出联系方法，可选择微信视频、微信语音或直接拨打电话。
-- 联系人管理页支持上移、下移排序。
-- 仓库层保留了读取系统通讯录的方法，但当前 Compose 界面没有接入“从系统通讯录导入”的完整入口。
-
-### 常用软件
-
-- 扫描本机可启动应用，缓存应用名称、包名、图标和安装/更新时间。
-- 家属可搜索应用、启用/禁用应用，并调整已启用应用的显示顺序。
-- 老人端只展示已启用应用的前 6 个，点击应用卡片直接启动对应软件。
-- 对小米系统预留了应用列表权限设置入口。
-
-### 微信辅助
-
-- 通过无障碍服务辅助打开微信并发起语音或视频通话。
-- 联系人需要配置微信备注名或微信号，启动任务前会将搜索关键词写入剪贴板。
-- 如果微信未安装、无障碍未开启、任务正在执行或剪贴板写入失败，会用语音提示让家属协助检查。
-- 无障碍服务只在点击家人并选择微信通话后执行一次任务。
-
-### 家属设置
-
-- 联系人管理、常用软件管理、微信无障碍设置入口。
-- 电话设置说明：老人端点击电话会直接拨出，首次使用需要授权电话权限。
-- 长按也当作点击开关。
-- 默认最大音量开关：回到老人桌面、打开常用软件、通话和报时时可自动拉高常用音量。
-- 整点语音报时：可选择 0:00 到 23:00 中的具体整点，开机后会重新调度。
-- 默认桌面状态检测、打开系统默认桌面设置、退出老人桌面模式。
-
-### 显示设置
-
-- 主题颜色：蓝色、暖色。
-- 字体大小：小、中、大。
-- 对比度：标准、高对比度。
-- `找家人` 每页数量：2、4、6、8 个。
-
-## 当前未接入或需注意
-
-- 天气、日期、农历相关工具类和 Open-Meteo 服务仍在源码中，但当前老人端首页没有展示天气、日期或农历信息。
-- `oneTapPhoneEnabled`、`floatingBallEnabled` 等设置字段存在，但当前主要 UI 没有完整功能入口。
-- README 中描述的功能以当前源码入口和 Compose 页面为准，不代表历史设计稿中的所有内容都已经接入。
-
-## 技术栈
-
-- 语言：Kotlin
-- UI：Jetpack Compose、Material 3
-- 架构：MVVM、Repository
-- 依赖注入：Hilt
-- 本地数据库：Room
-- 设置存储：DataStore Preferences
-- 网络：Retrofit、OkHttp
-- 图片加载：Coil
-- 异步：Kotlin Coroutines
-- 权限处理：XXPermissions
-- 农历库：lunar（当前未接入首页展示）
-
-## 环境要求
-
-- Android Studio 2024.2.1 或更高版本
-- JDK 17/18 推荐；项目当前 Gradle 配置使用 Java 8 字节码目标
-- Android SDK API 35
-- Gradle Wrapper 已随项目提交
-
-项目配置：
-
-- `applicationId`: `tech.huangsh.onetap`
-- `minSdk`: 24
-- `targetSdk`: 35
-- `compileSdk`: 35
-- `versionName`: 1.0
-- `versionCode`: 1
-
-## 构建与运行
-
-克隆项目：
-
-```bash
-git clone https://github.com/happylong233/OneTap-master.git
-cd OneTap-master
-```
-
-检查构建：
-
-```bash
-./gradlew build
-```
-
-安装调试版本：
-
-```bash
-./gradlew installDebug
-```
-
-生成 Debug APK：
-
-```bash
-./gradlew assembleDebug
-```
-
-生成 Release APK：
-
-```bash
-./gradlew assembleRelease
-```
-
-在 Windows PowerShell 中可以使用：
+Windows PowerShell：
 
 ```powershell
-.\gradlew.bat build
-.\gradlew.bat installDebug
+.\gradlew.bat :app:compileDebugKotlin
+.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:installDebug
 ```
+
+macOS / Linux：
+
+```bash
+./gradlew :app:compileDebugKotlin
+./gradlew :app:assembleDebug
+./gradlew :app:installDebug
+```
+
+也可以直接用 Android Studio 打开项目，选择 `app` 运行配置后安装到设备。
+
+## 支持平台
+
+| 项目 | 当前值 |
+| --- | --- |
+| 平台 | Android |
+| `applicationId` | `tech.huangsh.onetap` |
+| `minSdk` | 24 |
+| `targetSdk` | 35 |
+| `compileSdk` | 35 |
+| 语言 | Kotlin |
+| UI | Jetpack Compose / Material 3 |
+| 架构 | MVVM + Repository |
+| 本地存储 | Room + DataStore Preferences |
+
+## 常用命令
+
+| 目的 | Windows | macOS / Linux |
+| --- | --- | --- |
+| 编译 Kotlin | `.\gradlew.bat :app:compileDebugKotlin` | `./gradlew :app:compileDebugKotlin` |
+| 生成 Debug APK | `.\gradlew.bat :app:assembleDebug` | `./gradlew :app:assembleDebug` |
+| 安装 Debug 版本 | `.\gradlew.bat :app:installDebug` | `./gradlew :app:installDebug` |
+| 完整构建 | `.\gradlew.bat build` | `./gradlew build` |
+
+## 配置和权限
+
+| 功能 | 依赖/权限 | 说明 |
+| --- | --- | --- |
+| 直接拨号 | `CALL_PHONE` | 老人端点击电话会直接拨出，首次使用需要授权。 |
+| 微信语音/视频辅助 | 无障碍服务 | 依赖微信界面，不是微信官方 API。微信版本变化可能影响成功率。 |
+| 常用软件列表 | `QUERY_ALL_PACKAGES` / `GET_INSTALLED_APPS` | 用来扫描本机可启动应用。部分系统可能需要额外手动授权。 |
+| 整点语音报时 | `SCHEDULE_EXACT_ALARM`、`FOREGROUND_SERVICE` | 用 `AlarmManager` 调度，到点后启动前台服务并用 TTS 播报。 |
+| 开机后恢复报时 | `RECEIVE_BOOT_COMPLETED` | 设备重启后重新调度整点报时。 |
+| 默认最大音量 | `MODIFY_AUDIO_SETTINGS` | 会调整通话、媒体、铃声、闹钟、通知、系统音量。 |
+| 联系人头像 | `READ_EXTERNAL_STORAGE`、`FileProvider` | 用于选择和保存联系人头像。 |
+
+## 使用边界
+
+这些地方需要提前知道：
+
+- 当前首页不显示天气、日期和农历，虽然仓库里还保留了相关代码。
+- 仓库层有读取系统通讯录的方法，但当前界面没有完整接入“从系统通讯录导入”。
+- 微信辅助通过无障碍自动化完成，不能保证适配所有微信版本和所有系统。
+- 默认最大音量功能会修改多个音量通道，适合老人机使用，但普通手机上可能显得激进。
+- 整点报时受系统闹钟、电池优化、前台服务策略影响，真机行为需要按目标设备验证。
+- `oneTapPhoneEnabled`、`floatingBallEnabled` 等设置字段还没有完整 UI 功能。
+
+## 工作原理
+
+- `MainActivity` 作为桌面入口，加载 `ElderHomeShell`。
+- `ElderHomeShell` 在 `找家人` 和 `常用软件` 两页之间切换。
+- 联系人和常用软件保存在 Room 数据库里。
+- 字体、主题、报时、音量等设置保存在 DataStore Preferences。
+- 微信通话辅助由 `WeChatAccessibilityService` 和 `WeChatAutomationController` 处理。
+- 整点报时由 `TimeAnnouncementScheduler` 注册闹钟，`TimeAnnouncementReceiver` 接收触发，`TimeAnnouncementService` 用 TTS 播报。
+
+## FAQ
+
+### 为什么微信辅助要开无障碍？
+
+因为这里没有接微信官方通话 API。OneTap 只能通过无障碍服务辅助打开微信、搜索联系人并点击语音/视频通话入口。
+
+### 为什么电话要授权？
+
+老人端的电话按钮走的是直接拨号，不是只打开拨号盘，所以需要 `CALL_PHONE` 权限。
+
+### 常用软件为什么最多 6 个？
+
+老人端常用软件页刻意限制数量，避免重新变成一个复杂应用列表。管理页可以选择和排序，首页只取前 6 个。
+
+### 天气代码还在，为什么首页没有天气？
+
+天气服务和 Open-Meteo 映射代码还保留在仓库里，但当前老人端首页已经改成“找家人 / 常用软件”两页，没有接天气展示。
+
+### 可以不设为默认桌面吗？
+
+可以作为普通 App 打开。但如果不设为默认桌面，按系统主页键会回到原系统桌面，不会回到 OneTap。
 
 ## 目录结构
 
 ```text
 app/src/main/java/tech/huangsh/onetap/
-├── data/                 # Room 数据库、数据模型、仓库和天气相关远程服务
+├── data/                 # Room、DataStore、模型、仓库和天气相关远程服务
 ├── di/                   # Hilt 依赖注入
 ├── service/              # 微信无障碍自动化、整点报时、开机广播
 ├── ui/                   # Activity、Compose 页面和主题
@@ -151,26 +135,18 @@ app/src/main/java/tech/huangsh/onetap/
 └── viewmodel/            # ViewModel
 ```
 
-## 主要权限
+## 技术栈
 
-应用会根据功能使用以下权限或系统能力：
+- Kotlin
+- Jetpack Compose / Material 3
+- Hilt
+- Room
+- DataStore Preferences
+- Retrofit / OkHttp
+- Coil
+- Kotlin Coroutines
+- XXPermissions
 
-- `CALL_PHONE`：用于老人端直接拨打电话。
-- `QUERY_ALL_PACKAGES` / `GET_INSTALLED_APPS`：用于读取可启动应用列表并配置常用软件。
-- `INTERNET` / `ACCESS_NETWORK_STATE`：天气服务代码使用网络能力，但当前首页未展示天气。
-- `BIND_ACCESSIBILITY_SERVICE`：用于微信语音/视频通话辅助。
-- `READ_EXTERNAL_STORAGE` 和 `FileProvider`：用于联系人头像选择与本地文件访问。
-- `VIBRATE`、`MODIFY_AUDIO_SETTINGS`：用于交互反馈和自动调整音量。
-- `SCHEDULE_EXACT_ALARM`、`FOREGROUND_SERVICE`、`RECEIVE_BOOT_COMPLETED`：用于整点语音报时和开机后重新调度。
+## License
 
-## 使用建议
-
-1. 安装后将 OneTap 设置为默认桌面。
-2. 家属进入设置中心，先添加家人联系人和常用软件。
-3. 如需微信语音或视频通话辅助，在系统无障碍设置中开启 OneTap 微信辅助。
-4. 首次使用电话直拨时授权电话权限。
-5. 根据长辈习惯调整字体大小、对比度、主题、家人每页数量、长按点击、最大音量和整点报时。
-
-## 开源协议
-
-本项目使用 [MIT License](LICENSE)。
+[MIT License](LICENSE)
