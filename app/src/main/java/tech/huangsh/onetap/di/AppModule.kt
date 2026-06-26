@@ -13,7 +13,6 @@ import tech.huangsh.onetap.data.local.AppDatabase
 import tech.huangsh.onetap.data.local.dao.AppInfoDao
 import tech.huangsh.onetap.data.local.dao.ContactDao
 import tech.huangsh.onetap.data.local.migration.MIGRATION_1_2
-import tech.huangsh.onetap.data.remote.WeatherService
 import tech.huangsh.onetap.data.repository.AppRepository
 import tech.huangsh.onetap.data.repository.ContactRepository
 import tech.huangsh.onetap.data.repository.SettingsRepository
@@ -76,14 +75,6 @@ object AppModule {
         @ApplicationContext context: Context
     ): SettingsRepository {
         return SettingsRepository(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideWeatherService(
-        @ApplicationContext context: Context
-    ): WeatherService {
-        return WeatherService(context)
     }
 
     @Provides

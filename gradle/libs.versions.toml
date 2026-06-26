@@ -19,7 +19,6 @@ appcompat = "1.6.1"
 material = "1.10.0"
 constraintlayout = "2.1.4"
 datastore = "1.0.0"
-gson = "2.10.1"
 coil = "2.4.0"
 appcompat-version = "1.7.1"
 material-version = "1.12.0"
@@ -27,9 +26,6 @@ annotation = "1.6.0"
 constraintlayout-version = "2.1.4"
 lifecycle-livedata-ktx = "2.9.2"
 lifecycle-viewmodel-ktx = "2.9.2"
-lunar = "1.7.4"
-retrofit = "2.9.0"
-okhttp = "4.11.0"
 
 [libraries]
 # Core Android
@@ -76,14 +72,8 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 # Accompanist
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
 
-# Gson
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
-
 # Coil
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-
-# lunar
-lunar = { group = "cn.6tail", name = "lunar", version.ref = "lunar" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -96,12 +86,6 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle-livedata-ktx" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle-viewmodel-ktx" }
 reorderable = { module = "org.burnoutcrew.composereorderable:reorderable", version.ref = "reorderable" }
-
-# Retrofit
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

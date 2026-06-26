@@ -85,7 +85,6 @@ macOS / Linux：
 
 这些地方需要提前知道：
 
-- 当前首页不显示天气、日期和农历，虽然仓库里还保留了相关代码。
 - 仓库层有读取系统通讯录的方法，但当前界面没有完整接入“从系统通讯录导入”。
 - 微信辅助通过无障碍自动化完成，不能保证适配所有微信版本和所有系统。
 - 默认最大音量功能会修改多个音量通道，适合老人机使用，但普通手机上可能显得激进。
@@ -115,10 +114,6 @@ macOS / Linux：
 
 老人端常用软件页刻意限制数量，避免重新变成一个复杂应用列表。管理页可以选择和排序，首页只取前 6 个。
 
-### 天气代码还在，为什么首页没有天气？
-
-天气服务和 Open-Meteo 映射代码还保留在仓库里，但当前老人端首页已经改成“找家人 / 常用软件”两页，没有接天气展示。
-
 ### 可以不设为默认桌面吗？
 
 可以作为普通 App 打开。但如果不设为默认桌面，按系统主页键会回到原系统桌面，不会回到 OneTap。
@@ -127,11 +122,11 @@ macOS / Linux：
 
 ```text
 app/src/main/java/tech/huangsh/onetap/
-├── data/                 # Room、DataStore、模型、仓库和天气相关远程服务
+├── data/                 # Room、DataStore、模型和仓库
 ├── di/                   # Hilt 依赖注入
 ├── service/              # 微信无障碍自动化、整点报时、开机广播
 ├── ui/                   # Activity、Compose 页面和主题
-├── utils/                # 语音、音量、启动器、图片、日期等工具
+├── utils/                # 语音、音量、启动器、图片等工具
 └── viewmodel/            # ViewModel
 ```
 
@@ -142,7 +137,6 @@ app/src/main/java/tech/huangsh/onetap/
 - Hilt
 - Room
 - DataStore Preferences
-- Retrofit / OkHttp
 - Coil
 - Kotlin Coroutines
 - XXPermissions

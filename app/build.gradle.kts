@@ -103,23 +103,11 @@ dependencies {
     // XXPermissions - Android权限框架
     implementation("com.github.getActivity:XXPermissions:20.0")
 
-    // Gson
-    implementation(libs.gson)
-
     // Coil (Image loading)
     implementation(libs.coil.compose)
 
     // Reorderable (Drag and drop)
     implementation(libs.reorderable)
-
-    // lunar
-    implementation(libs.lunar)
-
-    // Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.gson)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
 
     // Testing
     testImplementation(libs.junit)
