@@ -22,6 +22,7 @@ import tech.huangsh.onetap.data.repository.SettingsRepository
 import tech.huangsh.onetap.data.repository.WeChatAutomationStartResult
 import tech.huangsh.onetap.service.wechat.WeChatAutomationController
 import tech.huangsh.onetap.ui.screens.elder.ElderTab
+import tech.huangsh.onetap.utils.AudioSettingsHelper
 import tech.huangsh.onetap.utils.VoiceAssistant
 import javax.inject.Inject
 
@@ -111,6 +112,7 @@ class MainViewModel @Inject constructor(
 
     private fun startWeChat(contact: Contact, video: Boolean) {
         viewModelScope.launch {
+            maximizeVolumeIfNeeded()
             val result = if (video) {
                 contactRepository.startWeChatVideoCall(contact.resolveWeChatSearchKeyword())
             } else {
@@ -140,6 +142,7 @@ class MainViewModel @Inject constructor(
 
     fun openDialPad(phone: String) {
         viewModelScope.launch {
+            maximizeVolumeIfNeeded()
             speak("已打开拨号页面，请点击绿色电话按钮")
             try {
                 appContext.startActivity(
@@ -155,6 +158,7 @@ class MainViewModel @Inject constructor(
 
     fun directDial(phone: String) {
         viewModelScope.launch {
+            maximizeVolumeIfNeeded()
             speak("正在帮您拨打电话")
             try {
                 appContext.startActivity(
@@ -170,6 +174,7 @@ class MainViewModel @Inject constructor(
 
     fun launchApp(packageName: String) {
         viewModelScope.launch {
+            maximizeVolumeIfNeeded()
             val intent = appRepository.launchApp(packageName)
             if (intent == null) {
                 speak("这个软件没有打开成功，请让家人检查")
@@ -192,6 +197,12 @@ class MainViewModel @Inject constructor(
             if (settingsRepository.settings.first().voiceEnabled) {
                 voiceAssistant.speak(text)
             }
+        }
+    }
+
+    suspend fun maximizeVolumeIfNeeded() {
+        if (settingsRepository.settings.first().maximizeCallVolumeEnabled) {
+            AudioSettingsHelper.maximizeCommonStreams(appContext)
         }
     }
 

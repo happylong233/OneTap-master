@@ -39,6 +39,10 @@ class SettingsRepository(private val context: Context) {
         val FLOATING_BALL_ENABLED = booleanPreferencesKey("floating_ball_enabled")
         val AUTO_START_ENABLED = booleanPreferencesKey("auto_start_enabled")
         val ONE_TAP_PHONE_ENABLED = booleanPreferencesKey("one_tap_phone_enabled")
+        val LONG_PRESS_AS_CLICK_ENABLED = booleanPreferencesKey("long_press_as_click_enabled")
+        val MAXIMIZE_CALL_VOLUME_ENABLED = booleanPreferencesKey("maximize_call_volume_enabled")
+        val HOURLY_TIME_ANNOUNCEMENT_ENABLED = booleanPreferencesKey("hourly_time_announcement_enabled")
+        val HOURLY_TIME_ANNOUNCEMENT_HOURS = stringSetPreferencesKey("hourly_time_announcement_hours")
         val PASSWORD = stringPreferencesKey("password")
         val IS_DEFAULT_LAUNCHER = booleanPreferencesKey("is_default_launcher")
         val SHOW_EXIT_LAUNCHER = booleanPreferencesKey("show_exit_launcher")
@@ -67,6 +71,12 @@ class SettingsRepository(private val context: Context) {
     val floatingBallEnabled: Flow<Boolean> = dataStore.data.map { it[FLOATING_BALL_ENABLED] ?: false }
     val autoStartEnabled: Flow<Boolean> = dataStore.data.map { it[AUTO_START_ENABLED] ?: false }
     val oneTapPhoneEnabled: Flow<Boolean> = dataStore.data.map { it[ONE_TAP_PHONE_ENABLED] ?: false }
+    val longPressAsClickEnabled: Flow<Boolean> = dataStore.data.map { it[LONG_PRESS_AS_CLICK_ENABLED] ?: true }
+    val maximizeCallVolumeEnabled: Flow<Boolean> = dataStore.data.map { it[MAXIMIZE_CALL_VOLUME_ENABLED] ?: true }
+    val hourlyTimeAnnouncementEnabled: Flow<Boolean> = dataStore.data.map { it[HOURLY_TIME_ANNOUNCEMENT_ENABLED] ?: false }
+    val hourlyTimeAnnouncementHours: Flow<Set<Int>> = dataStore.data.map {
+        parseAnnouncementHours(it[HOURLY_TIME_ANNOUNCEMENT_HOURS].orEmpty())
+    }
     val password: Flow<String> = dataStore.data.map { it[PASSWORD] ?: "" }
     
     // 桌面启动器设置
@@ -87,6 +97,10 @@ class SettingsRepository(private val context: Context) {
             floatingBallEnabled = preferences[FLOATING_BALL_ENABLED] ?: false,
             autoStartEnabled = preferences[AUTO_START_ENABLED] ?: false,
             oneTapPhoneEnabled = preferences[ONE_TAP_PHONE_ENABLED] ?: false,
+            longPressAsClickEnabled = preferences[LONG_PRESS_AS_CLICK_ENABLED] ?: true,
+            maximizeCallVolumeEnabled = preferences[MAXIMIZE_CALL_VOLUME_ENABLED] ?: true,
+            hourlyTimeAnnouncementEnabled = preferences[HOURLY_TIME_ANNOUNCEMENT_ENABLED] ?: false,
+            hourlyTimeAnnouncementHours = parseAnnouncementHours(preferences[HOURLY_TIME_ANNOUNCEMENT_HOURS].orEmpty()),
             password = preferences[PASSWORD] ?: "",
             isDefaultLauncher = preferences[IS_DEFAULT_LAUNCHER] ?: false,
             showExitLauncher = preferences[SHOW_EXIT_LAUNCHER] ?: true,
@@ -136,6 +150,27 @@ class SettingsRepository(private val context: Context) {
         dataStore.edit { it[ONE_TAP_PHONE_ENABLED] = enabled }
     }
 
+    suspend fun updateLongPressAsClickEnabled(enabled: Boolean) {
+        dataStore.edit { it[LONG_PRESS_AS_CLICK_ENABLED] = enabled }
+    }
+
+    suspend fun updateMaximizeCallVolumeEnabled(enabled: Boolean) {
+        dataStore.edit { it[MAXIMIZE_CALL_VOLUME_ENABLED] = enabled }
+    }
+
+    suspend fun updateHourlyTimeAnnouncementEnabled(enabled: Boolean) {
+        dataStore.edit { it[HOURLY_TIME_ANNOUNCEMENT_ENABLED] = enabled }
+    }
+
+    suspend fun updateHourlyTimeAnnouncementHours(hours: Set<Int>) {
+        dataStore.edit {
+            it[HOURLY_TIME_ANNOUNCEMENT_HOURS] = hours
+                .filter { hour -> hour in 0..23 }
+                .map { hour -> hour.toString() }
+                .toSet()
+        }
+    }
+
     suspend fun updatePassword(newPassword: String) {
         dataStore.edit { it[PASSWORD] = newPassword }
     }
@@ -163,6 +198,12 @@ class SettingsRepository(private val context: Context) {
             count <= 6 -> 6
             else -> 8
         }
+    }
+
+    private fun parseAnnouncementHours(rawHours: Set<String>): Set<Int> {
+        return rawHours.mapNotNull { it.toIntOrNull() }
+            .filter { it in 0..23 }
+            .toSet()
     }
 
     /**

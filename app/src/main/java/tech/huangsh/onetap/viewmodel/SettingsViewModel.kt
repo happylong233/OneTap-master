@@ -17,6 +17,7 @@ import tech.huangsh.onetap.data.model.FontSize
 import tech.huangsh.onetap.data.model.ThemeMode
 import tech.huangsh.onetap.data.repository.SettingsRepository
 import tech.huangsh.onetap.utils.LauncherUtils
+import tech.huangsh.onetap.utils.TimeAnnouncementScheduler
 import tech.huangsh.onetap.utils.VoiceAssistant
 import javax.inject.Inject
 
@@ -233,6 +234,34 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateLongPressAsClickEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateLongPressAsClickEnabled(enabled)
+        }
+    }
+
+    fun updateMaximizeCallVolumeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateMaximizeCallVolumeEnabled(enabled)
+        }
+    }
+
+    fun updateHourlyTimeAnnouncementEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateHourlyTimeAnnouncementEnabled(enabled)
+            rescheduleTimeAnnouncements()
+        }
+    }
+
+    fun updateHourlyTimeAnnouncementHour(hour: Int, selected: Boolean) {
+        viewModelScope.launch {
+            val current = settingsRepository.settings.first().hourlyTimeAnnouncementHours
+            val next = if (selected) current + hour else current - hour
+            settingsRepository.updateHourlyTimeAnnouncementHours(next)
+            rescheduleTimeAnnouncements()
+        }
+    }
+
     fun openAccessibilitySettings() {
         context.startActivity(
             Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
@@ -246,6 +275,17 @@ class SettingsViewModel @Inject constructor(
      */
     fun refreshDefaultLauncherStatus() {
         checkDefaultLauncherStatus()
+    }
+
+    fun rescheduleTimeAnnouncements() {
+        viewModelScope.launch {
+            val current = settingsRepository.settings.first()
+            TimeAnnouncementScheduler.reschedule(
+                context,
+                current.hourlyTimeAnnouncementEnabled,
+                current.hourlyTimeAnnouncementHours
+            )
+        }
     }
     
     /**

@@ -2,7 +2,8 @@ package tech.huangsh.onetap.ui.screens.elder
 
 import android.Manifest
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -145,6 +146,7 @@ fun FamilyPage(
                         FamilyContactCard(
                             contact = contact,
                             cardHeight = cardHeight,
+                            longPressAsClickEnabled = settings.longPressAsClickEnabled,
                             onPhotoClick = { selectedContact = contact }
                         )
                     }
@@ -306,6 +308,7 @@ private fun EmptyFamilySetupPanel(
 private fun FamilyContactCard(
     contact: Contact,
     cardHeight: Dp,
+    longPressAsClickEnabled: Boolean,
     onPhotoClick: () -> Unit,
     onVideoClick: () -> Unit = {},
     onVoiceClick: () -> Unit = {},
@@ -330,6 +333,7 @@ private fun FamilyContactCard(
                 contact = contact,
                 context = context,
                 onPhotoClick = onPhotoClick,
+                longPressAsClickEnabled = longPressAsClickEnabled,
                 modifier = Modifier
                     .weight(1f)
                     .height(contentHeight)
@@ -499,15 +503,20 @@ private fun DialogActionButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ContactPhoto(
     contact: Contact,
     context: android.content.Context,
     onPhotoClick: () -> Unit,
+    longPressAsClickEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.clickable { onPhotoClick() },
+        modifier = modifier.combinedClickable(
+            onClick = onPhotoClick,
+            onLongClick = if (longPressAsClickEnabled) onPhotoClick else null
+        ),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7EF))
     ) {

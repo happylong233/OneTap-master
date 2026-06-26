@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,20 +20,26 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.DisplaySettings
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -106,7 +113,31 @@ fun SettingsScreen(
             SettingsItemWithDescription(
                 icon = Icons.Default.Call,
                 title = "电话设置",
-                description = "老人端点击电话会直接拨出。首次使用时需要家属授权电话权限。"
+                description = "老人端点击电话会直接拨出。首次使用时需要家属授权电话权限。",
+                trailing = {}
+            )
+
+            SettingsToggleItem(
+                icon = Icons.Default.TouchApp,
+                title = "长按也当作点击",
+                description = "开启后，老人端大按钮和照片长按也会执行点击动作。",
+                checked = settings.longPressAsClickEnabled,
+                onCheckedChange = settingsViewModel::updateLongPressAsClickEnabled
+            )
+
+            SettingsToggleItem(
+                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                title = "默认最大音量",
+                description = "回到老人桌面、打开常用软件、通话和报时时，自动把常用音量调到最大。",
+                checked = settings.maximizeCallVolumeEnabled,
+                onCheckedChange = settingsViewModel::updateMaximizeCallVolumeEnabled
+            )
+
+            HourlyAnnouncementSettings(
+                enabled = settings.hourlyTimeAnnouncementEnabled,
+                selectedHours = settings.hourlyTimeAnnouncementHours,
+                onEnabledChange = settingsViewModel::updateHourlyTimeAnnouncementEnabled,
+                onHourChange = settingsViewModel::updateHourlyTimeAnnouncementHour
             )
 
             SettingsItem(
@@ -117,6 +148,105 @@ fun SettingsScreen(
 
             if (settings.showExitLauncher) {
                 LauncherSettingsSection(settingsViewModel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleItem(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    SettingsItemWithDescription(
+        icon = icon,
+        title = title,
+        description = description,
+        onClick = { onCheckedChange(!checked) },
+        trailing = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange
+            )
+        }
+    )
+}
+
+@Composable
+private fun HourlyAnnouncementSettings(
+    enabled: Boolean,
+    selectedHours: Set<Int>,
+    onEnabledChange: (Boolean) -> Unit,
+    onHourChange: (Int, Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SettingIcon(Icons.Default.Schedule)
+                Spacer(modifier = Modifier.width(20.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "整点语音报时",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "到选中的整点会自动播报时间，并把播报音量调到最大。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = enabled, onCheckedChange = onEnabledChange)
+            }
+
+            (0..23).chunked(4).forEach { rowHours ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowHours.forEach { hour ->
+                        val selected = hour in selectedHours
+                        val label = "%02d:00".format(hour)
+                        if (selected) {
+                            Button(
+                                onClick = { onHourChange(hour, false) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 48.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text(label)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { onHourChange(hour, true) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 48.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp)
+                            ) {
+                                Text(label)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -25,6 +25,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         updateLauncherStatus()
+        settingsViewModel.rescheduleTimeAnnouncements()
+        lifecycleScope.launch {
+            viewModel.maximizeVolumeIfNeeded()
+        }
         setContent {
             val settings by settingsViewModel.settings.collectAsState(initial = Settings())
             OneTapTheme(
@@ -41,6 +45,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updateLauncherStatus()
+        lifecycleScope.launch {
+            viewModel.maximizeVolumeIfNeeded()
+        }
         viewModel.resetToFamilyPage()
     }
 

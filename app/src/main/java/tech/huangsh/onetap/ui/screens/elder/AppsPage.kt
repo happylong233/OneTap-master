@@ -1,7 +1,8 @@
 package tech.huangsh.onetap.ui.screens.elder
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ fun AppsPage(
     modifier: Modifier = Modifier
 ) {
     val apps by viewModel.elderApps.collectAsState()
+    val settings by viewModel.settings.collectAsState()
     val context = LocalContext.current
 
     fun openAppManagement() {
@@ -75,7 +77,11 @@ fun AppsPage(
                 contentPadding = PaddingValues(top = 20.dp, bottom = 12.dp)
             ) {
                 items(apps, key = { it.packageName }) { app ->
-                    ElderAppTile(app = app, onClick = { viewModel.launchApp(app.packageName) })
+                    ElderAppTile(
+                        app = app,
+                        longPressAsClickEnabled = settings.longPressAsClickEnabled,
+                        onClick = { viewModel.launchApp(app.packageName) }
+                    )
                 }
             }
         }
@@ -128,13 +134,21 @@ private fun EmptyAppsPanel(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ElderAppTile(app: AppInfo, onClick: () -> Unit) {
+private fun ElderAppTile(
+    app: AppInfo,
+    longPressAsClickEnabled: Boolean,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 150.dp)
-            .clickable { onClick() },
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = if (longPressAsClickEnabled) onClick else null
+            ),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
